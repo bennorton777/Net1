@@ -2,6 +2,9 @@ CC = gcc
 CFLAGS = -std=c99 -pedantic -Wall -Werror
 RELEASE_FLAGS = -O2
 
+release : 
+	make clean; git add .; git commit; git push
+
 test: clean server client
 
 all : server client 
