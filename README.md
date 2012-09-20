@@ -1,2 +1,5 @@
 Net1
 ====
+
+Accept:
+    IPADDRESS (ADDFILE|LISTFILES)

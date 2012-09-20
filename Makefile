@@ -1,56 +1,24 @@
-COMPILER=G++
-
-# todo: object files into output path, processing c / c++ files in the same time (?), nested directories for source files (?)
-C = c
-OUTPUT_PATH = out/production/Net1/
+CC = gcc
+CFLAGS = -std=gnu99 -pedantic -Wall -Werror
+RELEASE_FLAGS = -O2
+OUTPUT_PATH = target/
 SOURCE_PATH = src/
-EXE = $(OUTPUT_PATH)Net1
 
-ifeq ($(COMPILER), G++)
-  ifeq ($(OS),Windows_NT)
-    OBJ = obj
-  else
-    OBJ = o
-  endif
-  COPT = -O2
-  CCMD = g++
-  OBJFLAG = -o
-  EXEFLAG = -o
-# INCLUDES = -I../.includes
-  INCLUDES =
-# LIBS = -lgc
-  LIBS =
-# LIBPATH = -L../gc/.libs
-  LIBPATH =
-  CPPFLAGS = $(COPT) -g $(INCLUDES)
-  LDFLAGS = $(LIBPATH) -g $(LIBS)
-  DEP = dep
-else
-  OBJ = obj
-  COPT = /O2
-  CCMD = cl
-  OBJFLAG = /Fo
-  EXEFLAG = /Fe
-# INCLUDES = /I..\\.includes
-  INCLUDES =
-# LIBS = ..\\.libs\\libgc.lib
-  LIBS =
-  CPPFLAGS = $(COPT) /DEBUG $(INCLUDES)
-  LDFLAGS = /DEBUG
-endif
 
-OBJS := $(patsubst %.$(C),%.$(OBJ),$(wildcard $(SOURCE_PATH)*.$(C)))
+dev: 
+	make clean; make all; clear; ./$(OUTPUT_PATH)TCPEchoServer4 5000
 
-%.$(OBJ):%.$(C)
-	@echo Compiling $(basename $<)...
-	$(CCMD) -c $(CPPFLAGS) $(CXXFLAGS) $< $(OBJFLAG)$@
+release : 
+	make clean; git add .; git commit; git push
 
-all: $(OBJS)
-	@echo Linking...
-	$(CCMD) $(LDFLAGS) $^ $(LIBS) $(EXEFLAG) $(EXE)
 
-clean:
-	rm -rf $(SOURCE_PATH)*.$(OBJ) $(EXE)
+all : server client 
 
-rebuild: clean all
-#rebuild is not entirely correct
+server : 
+	gcc -std=gnu99 $(SOURCE_PATH)TCPEchoServer4.c $(SOURCE_PATH)DieWithMessage.c $(SOURCE_PATH)TCPServerUtility.c $(SOURCE_PATH)AddressUtility.c -o $(OUTPUT_PATH)TCPEchoServer4
+	
+client : 
+	gcc -std=gnu99 $(SOURCE_PATH)TCPEchoClient4.c $(SOURCE_PATH)DieWithMessage.c $(SOURCE_PATH)AddressUtility.c -o $(OUTPUT_PATH)TCPEchoClient4
+
+clean :
+	rm $(OUTPUT_PATH)*.o; rm $(OUTPUT_PATH)log.net; rm $(OUTPUT_PATH)TCPEchoServer4; rm $(OUTPUT_PATH)TCPEchoClient4
