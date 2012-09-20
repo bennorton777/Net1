@@ -50,10 +50,11 @@ int main(int argc, char *argv[]) {
 
     char clntName[INET_ADDRSTRLEN]; // String to contain client address
     if (inet_ntop(AF_INET, &clntAddr.sin_addr.s_addr, clntName, sizeof(clntName)) != NULL){
-      		printf("Handling client %s/%d\n", clntName, ntohs(clntAddr.sin_port));
-		    FILE *f=fopen("log.net","a");
-
-		
+        printf("Handling client %s/%d\n", clntName, ntohs(clntAddr.sin_port));
+	    FILE *f=fopen("log.net","a");
+        fputs(clntName, f);
+        fputs("\n", f);
+        fclose(f);
 	}
     else
       puts("Unable to get client address");
