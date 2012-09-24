@@ -5,8 +5,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include "Practical.h"
+#include "mylib.h"
 
 static const int MAXPENDING = 5; // Maximum outstanding connection requests
+
 
 int SetupTCPServerSocket(const char *service) {
   // Construct the server address structure
@@ -103,15 +105,25 @@ void HandleTCPClient(int clntSocket) {
   if (numBytesRcvd < 0)
     DieWithSystemMessage("recv() failed");
 
-  // Send received string and receive again until end of stream
-  while (numBytesRcvd > 0) { // 0 indicates end of stream
-    // Echo message back to client
+
     if ((!strncmp(buffer, "ADDFILE", strlen("ADDFILE")))&&(strlen(buffer)==strlen("ADDFILE"))){
         printf("Gonna add a file, baby\n");
         char *filename=getParameter(buffer, 1);
         printf("Filename is %s", filename);
     }
     printf("Recieved %s\n", buffer);
+    split(buffer);
+    printf("Reciting parameters:\n");
+    for (;;){
+        char *string=(char *)deQueue();
+        if (!string){
+            break;
+        }
+        printf("%s\n",string);
+    }
+  // Send received string and receive again until end of stream
+  while (numBytesRcvd > 0) { // 0 indicates end of stream
+    // Echo message back to client
     ssize_t numBytesSent = send(clntSocket, buffer, numBytesRcvd, 0);
     if (numBytesSent < 0)
       DieWithSystemMessage("send() failed");
