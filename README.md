@@ -2,4 +2,4 @@ Net1
 ====
 
 Accept:
-    IPADDRESS (ADDFILE|LISTFILES)
+    (ADDFILE [-r] [filename...])||(listfiles)
