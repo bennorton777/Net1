@@ -75,28 +75,6 @@ int AcceptTCPConnection(int servSock) {
   return clntSock;
 }
 
-char *getParameter(char *buffer, int index){
-    int start;
-    int end;
-    int spaceCount=0;
-    for (int i=0;i<strlen(buffer);i++){
-        if (buffer[i]==' '){
-            spaceCount++;
-            if (spaceCount==index){
-                start=index+1;
-            }
-            if (spaceCount==index+1){
-                end=index-1;
-            }
-        }
-    }
-    char *parameter=(char *)malloc(sizeof(char)*(end-start+1));
-    for (int i=0;i<(end-start);i++){
-        parameter[i]=buffer[start+i];
-    }
-    return parameter;
-}
-
 void HandleTCPClient(int clntSocket) {
   char buffer[BUFSIZE]; // Buffer for echo string
 
@@ -105,11 +83,9 @@ void HandleTCPClient(int clntSocket) {
   if (numBytesRcvd < 0)
     DieWithSystemMessage("recv() failed");
 
-
+    buffer[numBytesRcvd]='\0';
     if ((!strncmp(buffer, "ADDFILE", strlen("ADDFILE")))&&(strlen(buffer)==strlen("ADDFILE"))){
         printf("Gonna add a file, baby\n");
-        char *filename=getParameter(buffer, 1);
-        printf("Filename is %s", filename);
     }
     printf("Recieved %s\n", buffer);
     split(buffer);
