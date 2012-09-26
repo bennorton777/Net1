@@ -6,9 +6,49 @@
 #include <stdlib.h>
 #include "Practical.h"
 #include "mylib.h"
+#include "llist.h"
+#include "Napster.h"
 
 static const int MAXPENDING = 5; // Maximum outstanding connection requests
 
+void listFiles(llist *dataList){
+    napsterNode *index;
+    Node *check=nextElement(dataList);
+    if (check){
+        index=(napsterNode *)check->data;
+    }
+    else{
+        return;
+    }
+    while(index){
+        fprintf(stderr, "%s %s\n", index->address, index->filename);
+        check=nextElement(dataList);
+        if(check){
+            index=(napsterNode *)check->data;
+        }
+    }
+}
+void removeFile(llist *argList, llist *dataList){
+    char *nextArg=deQueue(argList);
+    while(nextArg){
+        removeFromList(argList, findInList(argList,nextArg, sameString));
+        nextArg=deQueue(argList);
+    }
+}
+void addFile(llist *argList, llist *dataList, char *ipAddr){
+    char *nextArg=deQueue(argList);
+    if (sameString(nextArg, "-d")){
+        removeFile(argList, ipAddr);
+        return;
+    }
+    while(nextArg){
+        napsterNode *node=(napsterNode *)malloc(sizeof(napsterNode));
+        node->filename=nextArg;
+        node->address=ipAddr;
+        addToList(dataList, node);
+        nextArg=deQueue(argList);
+    }
+}
 
 int SetupTCPServerSocket(const char *service) {
   // Construct the server address structure
@@ -75,19 +115,25 @@ int AcceptTCPConnection(int servSock) {
   return clntSock;
 }
 
-void HandleTCPClient(int clntSocket, char *ipAddr) {
+void HandleTCPClient(int clntSocket, char *ipAddr, llist *dataList) {
   char buffer[BUFSIZE]; // Buffer for echo string
 
   // Receive message from client
   ssize_t numBytesRcvd = recv(clntSocket, buffer, BUFSIZE, 0);
   if (numBytesRcvd < 0)
     DieWithSystemMessage("recv() failed");
-    llist *list=newList();
+    llist *argList=newList();
     buffer[numBytesRcvd]='\0';
-    split(buffer, list);
-    char *funcArg=deQueue(list);
+    split(buffer, argList);
+    char *funcArg=deQueue(argList);
     if (sameString(funcArg, "ADDFILE")){
-//Do nothing
+        addFile(argList, dataList, ipAddr);
+    }
+    else if (sameString(funcArg, "LISTFILES")){
+        listFiles(dataList);
+    }
+    else{
+        fprintf(stderr,"WAT\n");
     }
   // Send received string and receive again until end of stream
   while (numBytesRcvd > 0) { // 0 indicates end of stream
@@ -105,7 +151,4 @@ void HandleTCPClient(int clntSocket, char *ipAddr) {
   }
 
   close(clntSocket); // Close client socket
-}
-void writeLine(char *ipAddr){
-    //Nothing yet
 }

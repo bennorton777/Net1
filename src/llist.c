@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "mylib.h"
+#include "llist.h"
 llist *newList(){
     llist *newList=(llist *)malloc(sizeof(llist));
     newList->length=0;
@@ -30,6 +30,17 @@ Node *findInList(llist *list, void *target, int (*compare)(void *, void *)){
     }
     return current;
 }
+void  resetIterator(llist *list){
+    list->index=list->head;
+}
+Node *nextElement(llist *list){
+    if (list->index){
+        Node *ret=list->index;
+        list->index=list->index->net;
+        return ret;
+    }
+    return NULL;
+}
 void addToList(llist *list, void *thing){
     list->length++;
     Node *last=getLastThing(list);
@@ -38,6 +49,9 @@ void addToList(llist *list, void *thing){
 //    fprintf(stderr, "Adding %s\n", (char *)thing);
     if (list->head==NULL){
         list->head=newThing;
+        if (!list->index){
+            list->index=newThing;
+        }
     }
     else{
         last->next=newThing;

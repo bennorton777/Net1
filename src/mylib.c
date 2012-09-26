@@ -13,7 +13,7 @@ void split(char *buffer, llist *list){
         token = strtok(NULL, delim);
     }
 }
-int sameString(char *a, char *b){
+int sameString(void *a, void *b){
     a=(char *)a;
     b=(char *)b;
     if ((strlen(a)==strlen(b))&&(!strncmp(a, b, strlen(a)))) return 1;

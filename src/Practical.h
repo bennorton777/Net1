@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <sys/socket.h>
+#include "llist.h"
 
 // Handle error with user msg
 void DieWithUserMessage(const char *msg, const char *detail);
@@ -18,7 +19,7 @@ int SetupTCPServerSocket(const char *service);
 // Accept a new TCP connection on a server socket
 int AcceptTCPConnection(int servSock);
 // Handle new TCP client
-void HandleTCPClient(int clntSocket, char *ipAddr);
+void HandleTCPClient(int clntSocket, char *ipAddr, llist *dataList);
 // Create and connect a new TCP client socket
 int SetupTCPClientSocket(const char *server, const char *service);
 

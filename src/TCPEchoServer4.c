@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include "Practical.h"
 #include "mylib.h"
+#include "llist.h"
 
 static const int MAXPENDING = 5; // Maximum outstanding connection requests
 
@@ -37,6 +38,8 @@ int main(int argc, char *argv[]) {
   if (listen(servSock, MAXPENDING) < 0)
     DieWithSystemMessage("listen() failed");
 
+
+    llist *dataList=newList();
   for (;;) { // Run forever
     struct sockaddr_in clntAddr; // Client address
     // Set length of client address structure (in-out parameter)
@@ -52,15 +55,11 @@ int main(int argc, char *argv[]) {
     char clntName[INET_ADDRSTRLEN]; // String to contain client address
     if (inet_ntop(AF_INET, &clntAddr.sin_addr.s_addr, clntName, sizeof(clntName)) != NULL){
         printf("Handling client %s/%d\n", clntName, ntohs(clntAddr.sin_port));
-	    FILE *f=fopen("log.net","a");
-        fputs(clntName, f);
-        fputs("\n", f);
-        fclose(f);
 	}
     else
       puts("Unable to get client address");
 
-    HandleTCPClient(clntSock, clntName);
+    HandleTCPClient(clntSock, clntName, dataList);
   }
   // NOT REACHED
 }
