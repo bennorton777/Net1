@@ -6,6 +6,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "Practical.h"
+#include "mylib.h"
 
 static const int MAXPENDING = 5; // Maximum outstanding connection requests
 
@@ -59,7 +60,7 @@ int main(int argc, char *argv[]) {
     else
       puts("Unable to get client address");
 
-    HandleTCPClient(clntSock);
+    HandleTCPClient(clntSock, clntName);
   }
   // NOT REACHED
 }

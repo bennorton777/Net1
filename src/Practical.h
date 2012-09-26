@@ -18,7 +18,7 @@ int SetupTCPServerSocket(const char *service);
 // Accept a new TCP connection on a server socket
 int AcceptTCPConnection(int servSock);
 // Handle new TCP client
-void HandleTCPClient(int clntSocket);
+void HandleTCPClient(int clntSocket, char *ipAddr);
 // Create and connect a new TCP client socket
 int SetupTCPClientSocket(const char *server, const char *service);
 

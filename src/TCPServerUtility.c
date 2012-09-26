@@ -75,27 +75,19 @@ int AcceptTCPConnection(int servSock) {
   return clntSock;
 }
 
-void HandleTCPClient(int clntSocket) {
+void HandleTCPClient(int clntSocket, char *ipAddr) {
   char buffer[BUFSIZE]; // Buffer for echo string
 
   // Receive message from client
   ssize_t numBytesRcvd = recv(clntSocket, buffer, BUFSIZE, 0);
   if (numBytesRcvd < 0)
     DieWithSystemMessage("recv() failed");
-
+    llist *list=newList();
     buffer[numBytesRcvd]='\0';
-    if ((!strncmp(buffer, "ADDFILE", strlen("ADDFILE")))&&(strlen(buffer)==strlen("ADDFILE"))){
-        printf("Gonna add a file, baby\n");
-    }
-    printf("Recieved %s\n", buffer);
-    split(buffer);
-    printf("Reciting parameters:\n");
-    for (;;){
-        char *string=(char *)deQueue();
-        if (!string){
-            break;
-        }
-        printf("%s\n",string);
+    split(buffer, list);
+    char *funcArg=deQueue(list);
+    if (sameString(funcArg, "ADDFILE")){
+//Do nothing
     }
   // Send received string and receive again until end of stream
   while (numBytesRcvd > 0) { // 0 indicates end of stream
@@ -113,4 +105,7 @@ void HandleTCPClient(int clntSocket) {
   }
 
   close(clntSocket); // Close client socket
+}
+void writeLine(char *ipAddr){
+    //Nothing yet
 }
