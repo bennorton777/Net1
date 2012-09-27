@@ -12,7 +12,7 @@ release :
 	make clean; git add .; git commit; git push
 
 
-all : server client 
+all : server client
 
 server : 
 	gcc -std=gnu99 $(SOURCE_PATH)TCPEchoServer4.c $(SOURCE_PATH)mylib.c $(SOURCE_PATH)DieWithMessage.c $(SOURCE_PATH)TCPServerUtility.c $(SOURCE_PATH)AddressUtility.c ${SOURCE_PATH}llist.c -o $(OUTPUT_PATH)TCPEchoServer4

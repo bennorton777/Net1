@@ -16,6 +16,16 @@ void split(char *buffer, llist *list){
 int sameString(void *a, void *b){
     a=(char *)a;
     b=(char *)b;
-    if ((strlen(a)==strlen(b))&&(!strncmp(a, b, strlen(a)))) return 1;
+    if (!a||!b){
+        fprintf(stderr, "HEY!  You can't compare null strings! %s %s\n",a,b);
+    }
+    if ((strlen(a)==strlen(b))&&(!strncmp(a, b, strlen(a)))){
+        fprintf(stderr, "%s and %s are the same\n", (char *)a, (char *)b);
+        return 1;
+    }
+    else{
+        fprintf(stderr, "%s and %s are NOT the same\n", (char *)a, (char *)b);
+        return 0;
+    }
     return 0;
 }

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "Napster.h"
 #include "llist.h"
 llist *newList(){
     llist *newList=(llist *)malloc(sizeof(llist));
@@ -22,12 +23,26 @@ Node *getLastThing(llist *list){
 //A good compare function returns any non-zero number for true, and zero for false.  I know that's not standards compliant, but this is a small scale project, so don't judge me okay!
 Node *findInList(llist *list, void *target, int (*compare)(void *, void *)){
     Node *current=list->head;
-    if (!current){
+    if (list->head==NULL){
+        fprintf(stderr, "You looked for something that can't exist %d\n", list->length);
         return NULL;
     }
-    while (current, (!compare(target, current->data))){
-        current=current->next;
+    while (current){
+        fprintf(stderr,"Checking a thing with given compare\n");
+        if (target==NULL){
+            fprintf(stderr,"target is null, so this won't work\n");
+        }
+        if (compare(target, current->data)){
+            break;
+        }
+        else{
+            current=current->next;
+        }
     }
+    if (current==NULL){
+        fprintf(stderr,"Failure in findInList\n");
+    }
+//    fprintf(stderr,"Returning node with address %s and filename %s\n", current->data->address, current->data->filename);
     return current;
 }
 void  resetIterator(llist *list){
@@ -36,7 +51,7 @@ void  resetIterator(llist *list){
 Node *nextElement(llist *list){
     if (list->index){
         Node *ret=list->index;
-        list->index=list->index->net;
+        list->index=list->index->next;
         return ret;
     }
     return NULL;
@@ -46,7 +61,6 @@ void addToList(llist *list, void *thing){
     Node *last=getLastThing(list);
     Node *newThing=(Node *)malloc(sizeof(Node));
     newThing->data=thing;
-//    fprintf(stderr, "Adding %s\n", (char *)thing);
     if (list->head==NULL){
         list->head=newThing;
         if (!list->index){
@@ -80,12 +94,12 @@ void *deQueue(llist *list){
     return NULL;
 }
 void removeFromList(llist *list, Node *node, void (*free_func)(void *)){
-//    fprintf(stderr, "Removing %s\n", (char *)node->data);
     if (list->head==node){
         list->length--;
         free_func(node->data);
         list->head=NULL;
         free(node);
+        fprintf(stderr,"Deleted\n");
         return;
     }
     Node *current=list->head;
@@ -98,4 +112,5 @@ void removeFromList(llist *list, Node *node, void (*free_func)(void *)){
         free_func(node->data);
         free(node);
     }
+    fprintf(stderr,"Deleted\n");
 }

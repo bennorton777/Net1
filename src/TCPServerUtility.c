@@ -11,6 +11,24 @@
 
 static const int MAXPENDING = 5; // Maximum outstanding connection requests
 
+void noop(void *a){
+    //Intentionally do nothing
+}
+int compareNapsterNodes(void *a, void *b){
+    fprintf(stderr,"Comparing napster nodes\n");
+    napsterNode *a1=(napsterNode *)a;
+    napsterNode *b1=(napsterNode *)b;
+    if (!a1||!b1){
+        fprintf(stderr,"Can't compare null nodes!\n");
+    }
+    if (sameString(a1->address, b1->address) && sameString(a1->filename, b1->filename)){
+        return 1;
+    }
+    else{
+        return 0;
+    }
+}
+
 void listFiles(llist *dataList){
     napsterNode *index;
     Node *check=nextElement(dataList);
@@ -26,28 +44,46 @@ void listFiles(llist *dataList){
         if(check){
             index=(napsterNode *)check->data;
         }
+        else{
+            index=NULL;
+        }
     }
 }
 void removeFile(llist *argList, llist *dataList){
+    if (dataList->head==NULL){
+        fprintf(stderr,"Data list is null at beginning of removeFile %d\n", dataList->length);
+    }
     char *nextArg=deQueue(argList);
     while(nextArg){
-        removeFromList(argList, findInList(argList,nextArg, sameString));
+      if (dataList->head==NULL){
+            fprintf(stderr,"Data list is null in removeFile %d\n", dataList->length);
+        }
+        removeFromList(dataList, findInList(dataList, nextArg, compareNapsterNodes), noop);
         nextArg=deQueue(argList);
     }
 }
 void addFile(llist *argList, llist *dataList, char *ipAddr){
     char *nextArg=deQueue(argList);
     if (sameString(nextArg, "-d")){
-        removeFile(argList, ipAddr);
+        fprintf(stderr,"Ah, you want to delete something.\n");
+        removeFile(argList, dataList);
         return;
     }
     while(nextArg){
         napsterNode *node=(napsterNode *)malloc(sizeof(napsterNode));
         node->filename=nextArg;
         node->address=ipAddr;
+        fprintf(stderr, "About to add %s\n",node->filename);
         addToList(dataList, node);
+        napsterNode *test=(napsterNode *)malloc(sizeof(napsterNode));
+        test->filename=nextArg;
+        test->address=ipAddr;
+        fprintf(stderr,"Preparing to retrieve node\n");
+        Node *wat=findInList(dataList, test, compareNapsterNodes);
+        fprintf(stderr,"Retrieved filename %s\n", ((char *)((napsterNode *)(wat->data))->filename));
         nextArg=deQueue(argList);
     }
+    fprintf(stderr,"I did some adding stuff! %d\n", dataList->length);
 }
 
 int SetupTCPServerSocket(const char *service) {
@@ -127,6 +163,7 @@ void HandleTCPClient(int clntSocket, char *ipAddr, llist *dataList) {
     split(buffer, argList);
     char *funcArg=deQueue(argList);
     if (sameString(funcArg, "ADDFILE")){
+       fprintf(stderr,"Add a file, hm?\n");
         addFile(argList, dataList, ipAddr);
     }
     else if (sameString(funcArg, "LISTFILES")){
