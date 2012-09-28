@@ -11,16 +11,14 @@
 
 static const int MAXPENDING = 5; // Maximum outstanding connection requests
 
-void noop(void *a){
-    //Intentionally do nothing
+void string_free(void *a){
+    char *a1=(char *)a;
+    free(a1);
 }
 int compareNapsterNodes(void *a, void *b){
-    fprintf(stderr,"Comparing napster nodes\n");
     napsterNode *a1=(napsterNode *)a;
     napsterNode *b1=(napsterNode *)b;
-    if (!a1||!b1){
-        fprintf(stderr,"Can't compare null nodes!\n");
-    }
+
     if (sameString(a1->address, b1->address) && sameString(a1->filename, b1->filename)){
         return 1;
     }
@@ -29,7 +27,10 @@ int compareNapsterNodes(void *a, void *b){
     }
 }
 
-void listFiles(llist *dataList){
+void listFiles(llist *dataList, int clntSocket){
+    char *retBuff=malloc(sizeof(char)*strlen("Files are:\n"));
+    strcpy(retBuff,"Files are:\n");
+    resetIterator(dataList);
     napsterNode *index;
     Node *check=nextElement(dataList);
     if (check){
@@ -39,7 +40,13 @@ void listFiles(llist *dataList){
         return;
     }
     while(index){
-        fprintf(stderr, "%s %s\n", index->address, index->filename);
+        char *newLine=malloc(sizeof(char)*(strlen(index->address)+strlen(index->filename)+3));
+        strcat(newLine,index->address);
+        strcat(newLine," ");
+        strcat(newLine,index->filename);
+        strcat(newLine,"\n");
+        retBuff=realloc(retBuff, (strlen(retBuff)+strlen(newLine)+1));
+        strcat(retBuff, newLine);
         check=nextElement(dataList);
         if(check){
             index=(napsterNode *)check->data;
@@ -48,42 +55,43 @@ void listFiles(llist *dataList){
             index=NULL;
         }
     }
+    ssize_t numBytesSent = send(clntSocket, retBuff, (sizeof(char)*strlen(retBuff)), 0);
+        if (numBytesSent < 0)
+          DieWithSystemMessage("send() failed");
+            close(clntSocket); // Close client socket
+            return;
 }
-void removeFile(llist *argList, llist *dataList){
-    if (dataList->head==NULL){
-        fprintf(stderr,"Data list is null at beginning of removeFile %d\n", dataList->length);
-    }
+void removeFile(llist *argList, llist *dataList, char *ipAddr){
     char *nextArg=deQueue(argList);
+    napsterNode *testNode=(napsterNode *)malloc(sizeof(napsterNode));
+    testNode->address=ipAddr;
     while(nextArg){
-      if (dataList->head==NULL){
-            fprintf(stderr,"Data list is null in removeFile %d\n", dataList->length);
-        }
-        removeFromList(dataList, findInList(dataList, nextArg, compareNapsterNodes), noop);
+        testNode->filename=nextArg;
+        removeFromList(dataList, findInList(dataList, testNode, compareNapsterNodes), string_free);
         nextArg=deQueue(argList);
     }
+    free(testNode);
+    resetIterator(argList);
 }
 void addFile(llist *argList, llist *dataList, char *ipAddr){
     char *nextArg=deQueue(argList);
     if (sameString(nextArg, "-d")){
-        fprintf(stderr,"Ah, you want to delete something.\n");
-        removeFile(argList, dataList);
+        removeFile(argList, dataList, ipAddr);
+        resetIterator(argList);
         return;
     }
     while(nextArg){
         napsterNode *node=(napsterNode *)malloc(sizeof(napsterNode));
-        node->filename=nextArg;
-        node->address=ipAddr;
-        fprintf(stderr, "About to add %s\n",node->filename);
+        char *nextArgMalloced=(char *)malloc(sizeof(char)*strlen(nextArg));
+        char *ipAddrMalloced=(char *)malloc(sizeof(char)*strlen(ipAddr));
+        strcpy(nextArgMalloced, nextArg);
+        strcpy(ipAddrMalloced,ipAddr);
+        node->filename=nextArgMalloced;
+        node->address=ipAddrMalloced;
         addToList(dataList, node);
-        napsterNode *test=(napsterNode *)malloc(sizeof(napsterNode));
-        test->filename=nextArg;
-        test->address=ipAddr;
-        fprintf(stderr,"Preparing to retrieve node\n");
-        Node *wat=findInList(dataList, test, compareNapsterNodes);
-        fprintf(stderr,"Retrieved filename %s\n", ((char *)((napsterNode *)(wat->data))->filename));
         nextArg=deQueue(argList);
     }
-    fprintf(stderr,"I did some adding stuff! %d\n", dataList->length);
+    resetIterator(argList);
 }
 
 int SetupTCPServerSocket(const char *service) {
@@ -163,23 +171,18 @@ void HandleTCPClient(int clntSocket, char *ipAddr, llist *dataList) {
     split(buffer, argList);
     char *funcArg=deQueue(argList);
     if (sameString(funcArg, "ADDFILE")){
-       fprintf(stderr,"Add a file, hm?\n");
         addFile(argList, dataList, ipAddr);
     }
     else if (sameString(funcArg, "LISTFILES")){
-        listFiles(dataList);
-    }
-    else{
-        fprintf(stderr,"WAT\n");
+        listFiles(dataList, clntSocket);
+        return;
     }
   // Send received string and receive again until end of stream
   while (numBytesRcvd > 0) { // 0 indicates end of stream
     // Echo message back to client
-    ssize_t numBytesSent = send(clntSocket, buffer, numBytesRcvd, 0);
+    ssize_t numBytesSent = send(clntSocket, "Success\n", numBytesRcvd, 0);
     if (numBytesSent < 0)
       DieWithSystemMessage("send() failed");
-    else if (numBytesSent != numBytesRcvd)
-      DieWithUserMessage("send()", "sent unexpected number of bytes");
 
     // See if there is more data to receive
     numBytesRcvd = recv(clntSocket, buffer, BUFSIZE, 0);
