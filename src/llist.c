@@ -68,21 +68,21 @@ void addToList(llist *list, void *thing){
     list->length++;
 }
 void *deQueue(llist *list){
-    if (!list->length){
+    if ((!list->length)||(list->head==NULL)){
         return NULL;
     }
     void *temp=list->head->data;
-        removeFromList(list, list->head, noop);
-        return temp;
+    list->head=list->head->next;
+    return temp;
 }
-void removeFromList(llist *list, Node *node, void (*free_func)(void *)){
+int removeFromList(llist *list, Node *node, void (*free_func)(void *)){
     if (!node){
-        return;
+        return 0;
     }
     if (list->head==node){
         list->length--;
         list->head=list->head->next;
-        return;
+        return 1;
     }
     Node *current=list->head;
     while((current->next!=node)&&(current->next!=NULL)){
@@ -91,8 +91,6 @@ void removeFromList(llist *list, Node *node, void (*free_func)(void *)){
     if (current->next==node){
         list->length--;
         current->next=current->next->next;
-        //free_func(node->data);
-        //free(node);
-        return;
+        return 1;
     }
 }

@@ -14,6 +14,6 @@ Node *nextElement(llist *list);
 llist *newList();
 void *deQueue(llist *list);
 void addToList(llist *list, void * thing);
-void removeFromList(llist *list, Node *node, void (*free_func)(void *));
+int removeFromList(llist *list, Node *node, void (*free_func)(void *));
 Node *findInList(llist *list, void *target, int (*compare)(void *, void *));
 #endif

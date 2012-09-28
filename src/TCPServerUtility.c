@@ -37,6 +37,10 @@ void listFiles(llist *dataList, int clntSocket){
         index=(napsterNode *)check->data;
     }
     else{
+            ssize_t numBytesSent = send(clntSocket, "No files found!\n", (sizeof(char)*strlen("No files found!\n")), 0);
+                if (numBytesSent < 0)
+                  DieWithSystemMessage("send() failed");
+                    close(clntSocket);
         return;
     }
     while(index){
@@ -61,24 +65,32 @@ void listFiles(llist *dataList, int clntSocket){
             close(clntSocket); // Close client socket
             return;
 }
-void removeFile(llist *argList, llist *dataList, char *ipAddr){
+int removeFile(llist *argList, llist *dataList, char *ipAddr){
     char *nextArg=deQueue(argList);
+    int flag=1;
+    int test;
     napsterNode *testNode=(napsterNode *)malloc(sizeof(napsterNode));
     testNode->address=ipAddr;
     while(nextArg){
         testNode->filename=nextArg;
-        removeFromList(dataList, findInList(dataList, testNode, compareNapsterNodes), string_free);
+        test=removeFromList(dataList, findInList(dataList, testNode, compareNapsterNodes), string_free);
         nextArg=deQueue(argList);
+        if (flag){
+            flag=test;
+        }
     }
     free(testNode);
     resetIterator(argList);
+    return flag;
 }
-void addFile(llist *argList, llist *dataList, char *ipAddr){
+int addFile(llist *argList, llist *dataList, char *ipAddr){
     char *nextArg=deQueue(argList);
+    if (!nextArg){
+        return -1;
+    }
     if (sameString(nextArg, "-d")){
-        removeFile(argList, dataList, ipAddr);
         resetIterator(argList);
-        return;
+        return removeFile(argList, dataList, ipAddr);;
     }
     while(nextArg){
         napsterNode *node=(napsterNode *)malloc(sizeof(napsterNode));
@@ -92,6 +104,7 @@ void addFile(llist *argList, llist *dataList, char *ipAddr){
         nextArg=deQueue(argList);
     }
     resetIterator(argList);
+    return 1;
 }
 
 int SetupTCPServerSocket(const char *service) {
@@ -161,7 +174,7 @@ int AcceptTCPConnection(int servSock) {
 
 void HandleTCPClient(int clntSocket, char *ipAddr, llist *dataList) {
   char buffer[BUFSIZE]; // Buffer for echo string
-
+  int flag=-1;
   // Receive message from client
   ssize_t numBytesRcvd = recv(clntSocket, buffer, BUFSIZE, 0);
   if (numBytesRcvd < 0)
@@ -171,16 +184,32 @@ void HandleTCPClient(int clntSocket, char *ipAddr, llist *dataList) {
     split(buffer, argList);
     char *funcArg=deQueue(argList);
     if (sameString(funcArg, "ADDFILE")){
-        addFile(argList, dataList, ipAddr);
+        flag=addFile(argList, dataList, ipAddr);
     }
     else if (sameString(funcArg, "LISTFILES")){
         listFiles(dataList, clntSocket);
         return;
     }
+    const char *fail=malloc(sizeof(char)*strlen("No such file\n\r"));
+    const char *success=malloc(sizeof(char)*strlen("Successful \n\r"));
+    const char *wat=malloc(sizeof(char)*strlen("Invalid Syntax\n\r"));
+    strcpy(fail,"No such file\n\r");
+    strcpy(success,"Successful \n\r");
+    strcpy(wat,"Invalid Syntax\n\r");
+    const char *ret;
+    if (flag==1){
+        ret=success;
+    }
+    else if (flag==0){
+        ret=fail;
+    }
+    else{
+        ret=wat;
+    }
   // Send received string and receive again until end of stream
   while (numBytesRcvd > 0) { // 0 indicates end of stream
     // Echo message back to client
-    ssize_t numBytesSent = send(clntSocket, "Success\n", numBytesRcvd, 0);
+    ssize_t numBytesSent = send(clntSocket, ret, (ssize_t)strlen(ret), 20);
     if (numBytesSent < 0)
       DieWithSystemMessage("send() failed");
 
